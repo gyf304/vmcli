@@ -3,11 +3,12 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		D4C1A16125ABBE12005F62E6 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C1A16025ABBE12005F62E6 /* main.swift */; };
+		D4C1A16C25ABC6FD005F62E6 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = D4C1A16B25ABC6FD005F62E6 /* ArgumentParser */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +26,7 @@
 /* Begin PBXFileReference section */
 		D4C1A15D25ABBE12005F62E6 /* vmcli */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = vmcli; sourceTree = BUILT_PRODUCTS_DIR; };
 		D4C1A16025ABBE12005F62E6 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		D4C1A16825ABBE2A005F62E6 /* vmcli.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = vmcli.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +34,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D4C1A16C25ABC6FD005F62E6 /* ArgumentParser in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -57,6 +60,7 @@
 		D4C1A15F25ABBE12005F62E6 /* vmcli */ = {
 			isa = PBXGroup;
 			children = (
+				D4C1A16825ABBE2A005F62E6 /* vmcli.entitlements */,
 				D4C1A16025ABBE12005F62E6 /* main.swift */,
 			);
 			path = vmcli;
@@ -78,6 +82,9 @@
 			dependencies = (
 			);
 			name = vmcli;
+			packageProductDependencies = (
+				D4C1A16B25ABC6FD005F62E6 /* ArgumentParser */,
+			);
 			productName = vmcli;
 			productReference = D4C1A15D25ABBE12005F62E6 /* vmcli */;
 			productType = "com.apple.product-type.tool";
@@ -105,6 +112,9 @@
 				Base,
 			);
 			mainGroup = D4C1A15425ABBE12005F62E6;
+			packageReferences = (
+				D4C1A16A25ABC6FD005F62E6 /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
+			);
 			productRefGroup = D4C1A15E25ABBE12005F62E6 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -159,6 +169,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -220,6 +231,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -244,6 +256,8 @@
 		D4C1A16525ABBE12005F62E6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = vmcli/vmcli.entitlements;
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -253,6 +267,8 @@
 		D4C1A16625ABBE12005F62E6 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = vmcli/vmcli.entitlements;
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -281,6 +297,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D4C1A16A25ABC6FD005F62E6 /* XCRemoteSwiftPackageReference "swift-argument-parser" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-argument-parser";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.3.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D4C1A16B25ABC6FD005F62E6 /* ArgumentParser */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D4C1A16A25ABC6FD005F62E6 /* XCRemoteSwiftPackageReference "swift-argument-parser" */;
+			productName = ArgumentParser;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D4C1A15525ABBE12005F62E6 /* Project object */;
 }
