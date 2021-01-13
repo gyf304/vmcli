@@ -13,9 +13,14 @@ enum SizeSuffix: UInt64, ExpressibleByArgument {
          GB = 1000000000, GiB = 0x40000000
 }
 
-var origTerm : termios? = nil
+var origStdinTerm : termios? = nil
+var origStdoutTerm : termios? = nil
 
-// mask TERM signal so we can perform clean up
+var vm : VZVirtualMachine? = nil
+
+var stopRequested = false
+
+// mask TERM signals so we can perform clean up
 let signalMask = SIGPIPE | SIGINT | SIGTERM | SIGHUP
 signal(signalMask, SIG_IGN)
 let sigintSrc = DispatchSource.makeSignalSource(signal: signalMask, queue: .main)
@@ -26,20 +31,21 @@ sigintSrc.resume()
 
 func setupTty() {
     if isatty(0) != 0 {
-        origTerm = termios()
+        origStdinTerm = termios()
         var term = termios()
-        tcgetattr(0, &origTerm!)
+        tcgetattr(0, &origStdinTerm!)
         tcgetattr(0, &term)
-        term.c_lflag = term.c_lflag & ~UInt(ECHO) & ~UInt(ICANON);
-        assert(VINTR == 8)
-        term.c_cc.8 = 0
+        cfmakeraw(&term)
         tcsetattr(0, TCSANOW, &term)
     }
 }
 
 func resetTty() {
-    if origTerm != nil {
-        tcsetattr(0, TCSANOW, &origTerm!)
+    if origStdinTerm != nil {
+        tcsetattr(0, TCSANOW, &origStdinTerm!)
+    }
+    if origStdoutTerm != nil {
+        tcsetattr(1, TCSANOW, &origStdoutTerm!)
     }
 }
 
@@ -58,6 +64,33 @@ func openDisk(path: String, readOnly: Bool) throws -> VZVirtioBlockDeviceConfigu
     }
     let vmBlockDevCfg = VZVirtioBlockDeviceConfiguration(attachment: vmDisk)
     return vmBlockDevCfg
+}
+
+class OccurrenceCounter {
+    let pattern: Data
+    var i = 0
+    init(_ pattern: Data) {
+        self.pattern = pattern
+    }
+    
+    func process(_ data: Data) -> Int {
+        if pattern.count == 0 {
+            return 0
+        }
+        var occurrences = 0
+        for byte in data {
+            if byte == pattern[i] {
+                i += 1
+                if i >= pattern.count {
+                    occurrences += 1
+                    i = 0
+                }
+            } else {
+                i = 0
+            }
+        }
+        return occurrences
+    }
 }
 
 class VMCLIDelegate: NSObject, VZVirtualMachineDelegate {
@@ -89,7 +122,7 @@ struct VMCLI: ParsableCommand {
     @Option(name: [ .customLong("cdrom") ], help: "CD-ROMs to use")
     var cdroms: [String] = []
 
-    @Option(name: [ .short, .customLong("network") ],help: """
+    @Option(name: [ .short, .customLong("network") ], help: """
 Networks to use. e.g. aa:bb:cc:dd:ee:ff@nat for a nat device, \
 or ...@en0 for bridging to en0. \
 Omit mac address for a generated address.
@@ -110,6 +143,9 @@ Omit mac address for a generated address.
 
     @Option(help: "Kernel cmdline to use")
     var cmdline: String?
+
+    @Option(help: "Escape Sequence, when using a tty")
+    var escapeSequence: String = "q"
 
     mutating func run() throws {
         vmCfg.cpuCount = cpuCount
@@ -133,15 +169,14 @@ Omit mac address for a generated address.
         }
 
         // set up tty
-        let fin = FileHandle(fileDescriptor: 0)
-        let fout = FileHandle(fileDescriptor: 1)
-
-        // disable stdin echo, disable stdin line buffer, disable ^C
-        // TODO: properly handle escape sequences
-        setupTty()
+        let vmSerialIn = Pipe()
+        let vmSerialOut = Pipe()
 
         let vmConsoleCfg = VZVirtioConsoleDeviceSerialPortConfiguration()
-        let vmSerialPort = VZFileHandleSerialPortAttachment(fileHandleForReading: fin, fileHandleForWriting: fout)
+        let vmSerialPort = VZFileHandleSerialPortAttachment(
+            fileHandleForReading: vmSerialIn.fileHandleForReading,
+            fileHandleForWriting: vmSerialOut.fileHandleForWriting
+        )
         vmConsoleCfg.attachment = vmSerialPort
         vmCfg.serialPorts = [ vmConsoleCfg ]
 
@@ -190,12 +225,43 @@ Omit mac address for a generated address.
         vmCfg.entropyDevices = [ VZVirtioEntropyDeviceConfiguration() ]
 
         try vmCfg.validate()
+        
+        // disable stdin echo, disable stdin line buffer, disable ^C
+        setupTty()
+
+        // set up piping.
+        var fullEscapeSequence = Data([0x1b]) // escape sequence always starts with ESC
+        fullEscapeSequence.append(escapeSequence.data(using: .nonLossyASCII)!)
+        let escapeSequenceCounter = OccurrenceCounter(fullEscapeSequence)
+        FileHandle.standardInput.waitForDataInBackgroundAndNotify()
+        NotificationCenter.default.addObserver(forName: NSNotification.Name.NSFileHandleDataAvailable, object: FileHandle.standardInput, queue: nil)
+        {_ in
+            let data = FileHandle.standardInput.availableData
+            if origStdinTerm != nil && escapeSequenceCounter.process(data) > 0 {
+                FileHandle.standardError.write("Escape sequence detected, exiting.\n".data(using: .utf8)!)
+                quit(1)
+            }
+            vmSerialIn.fileHandleForWriting.write(data)
+            if data.count > 0 {
+                FileHandle.standardInput.waitForDataInBackgroundAndNotify()
+            }
+        }
+
+        vmSerialOut.fileHandleForReading.waitForDataInBackgroundAndNotify()
+        NotificationCenter.default.addObserver(forName: NSNotification.Name.NSFileHandleDataAvailable, object: vmSerialOut.fileHandleForReading, queue: nil)
+        {_ in
+            let data = vmSerialOut.fileHandleForReading.availableData
+            FileHandle.standardOutput.write(data)
+            if data.count > 0 {
+                vmSerialOut.fileHandleForReading.waitForDataInBackgroundAndNotify()
+            }
+        }
 
         // start VM
-        let vm = VZVirtualMachine(configuration: vmCfg)
-        vm.delegate = delegate
+        vm = VZVirtualMachine(configuration: vmCfg)
+        vm!.delegate = delegate
 
-        vm.start(completionHandler: { (result: Result<Void, Error>) -> Void in
+        vm!.start(completionHandler: { (result: Result<Void, Error>) -> Void in
             switch result {
             case .success:
                 return
@@ -203,6 +269,7 @@ Omit mac address for a generated address.
                 quit(1)
             }
         })
+
         RunLoop.main.run()
     }
 }
