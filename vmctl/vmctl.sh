@@ -14,16 +14,12 @@ function generate_mac {
 }
 
 function get_ip_mac_assoc {
-	arp -an \
+	arp -a \
 		| cut -d ' ' -f 2,4 \
 		| grep : \
 		| sed 's/[\(\)]//g' \
 		| sed 's/[: ]/ 0x/g' \
 		| xargs -L 1 printf '%s %02x%02x%02x%02x%02x%02x\n'
-}
-
-function get_mac_ip {
-	get_ip_mac_assoc | grep "$1" | cut -d ' ' -f 1
 }
 
 function get_mac {
@@ -123,16 +119,15 @@ function get_ip {
 	if [ ! -e "$dir" ]; then
 		exit 1
 	fi
+	assoc="$(get_ip_mac_assoc)"
 	for addrfile in "$dir"/*.macaddr; do
-		mac=$(cat "$addrfile")
-		get_mac_ip "$mac"
+		printf "%s" "$assoc" | grep "$(cat "$addrfile")" | cut -d ' ' -f 1
 	done
 }
 
 function vm_ssh {
 	ip=$(get_ip "$1" | head -n 1)
 	if [ "$ip" = "" ]; then
-		echo "cannot obtain IP" >&2
 		exit 1
 	fi
 	ssh "$ip"

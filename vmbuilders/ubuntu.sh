@@ -50,7 +50,7 @@ tar xzvf disk.tar.gz
 mv "focal-server-cloudimg-$arch.img" disk.img
 rm README
 
-# update cloudinit config
+# create cloudinit config
 cat << EOF > user.yaml
 users:
   - name: $USER
@@ -63,6 +63,7 @@ users:
       - $(cat ~/.ssh/id_rsa.pub | head -n 1)
 EOF
 
+# boot into initramfs to modify the disk image
 cat << EOFOUTER | expect | sed 's/[^[:print:]]//g'
 set timeout 60
 spawn vmcli -k vmlinux --initrd=initrd -d disk.img "--cmdline=console=hvc0 irqfixup"
