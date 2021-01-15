@@ -2,6 +2,8 @@
 
 A set of utilities to help you manage VMs with `Virtualization.framework`
 
+![vmctl-demo](./docs/demos/vmctl.svg)
+
 ## Installation
 
 ```
