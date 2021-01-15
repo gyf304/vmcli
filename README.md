@@ -99,3 +99,8 @@ OPTIONS:
 usage: vmctl {start|stop|attach|ip|ssh} vm
 ```
 
+## References
+
+[SimpleVM](https://github.com/KhaosT/SimpleVM) is a proof-of-concept using `Virtualization.framework` by [KhaosT](https://github.com/KhaosT)
+
+[vftool][https://github.com/evansm7/vftool] is a very similar tool written by [evansm7](https://github.com/evansm7) but in Objective-C not Swift.
