@@ -21,7 +21,7 @@ disk=disk.img
 network=nat
 EOF
 
-arch="$(uname -m)"
+arch="$(/usr/bin/uname -m)"
 
 if [ "$arch" = "x86_64" ]; then
 	arch="amd64"
@@ -34,16 +34,16 @@ fi
 
 # download files
 if [ ! -e vmlinux ]; then
-curl -o vmlinux.gz "https://cloud-images.ubuntu.com/releases/focal/release/unpacked/ubuntu-20.04-server-cloudimg-$arch-vmlinuz-generic"
+/usr/bin/curl -o vmlinux.gz "https://cloud-images.ubuntu.com/releases/focal/release/unpacked/ubuntu-20.04-server-cloudimg-$arch-vmlinuz-generic"
 gunzip vmlinux.gz
 fi
 
 if [ ! -e initrd ]; then
-curl -o initrd "https://cloud-images.ubuntu.com/releases/focal/release/unpacked/ubuntu-20.04-server-cloudimg-$arch-initrd-generic"
+/usr/bin/curl -o initrd "https://cloud-images.ubuntu.com/releases/focal/release/unpacked/ubuntu-20.04-server-cloudimg-$arch-initrd-generic"
 fi
 
 if [ ! -e disk.tar.gz ]; then
-curl -o disk.tar.gz "https://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-$arch.tar.gz"
+/usr/bin/curl -o disk.tar.gz "https://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-$arch.tar.gz"
 fi
 
 tar xzvf disk.tar.gz
@@ -89,7 +89,7 @@ send -- "poweroff\r"
 EOFOUTER
 
 # expand disk to 4GB
-dd if=/dev/null of=disk.img bs=1m count=0 seek="$disk_size"
+/bin/dd if=/dev/null of=disk.img bs=1m count=0 seek="$disk_size"
 
 # perform clean up
 if [ "$skip_cleanup" != "" ]; then
