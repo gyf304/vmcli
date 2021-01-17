@@ -28,17 +28,17 @@ Provision a Ubuntu VM, and install that to `~/VMs`.
 The VM will auto create your user with your ssh public key at `~/.ssh/id_rsa.pub`.
 ```bash
 make build/vm/ubuntu
-mv build/vm/ubuntu ~/VMs/ubuntu
+mv build/vm/ubuntu "${VMCTLDIR}/ubuntu"
 ```
 
 Optionally expand the VM volume, for example to 16G.
 ```bash
-dd if=/dev/null of=~/VMs/ubuntu/disk.img bs=1g count=0 seek=16
+dd if=/dev/null of="${VMCTLDIR}/ubuntu/disk.img" bs=1g count=0 seek=16
 ```
 
 Optionally edit the VM config for more RAM and/or CPU cores
 ```bash
-vi ~/VMs/ubuntu/vm.conf
+vi "${VMCTLDIR}/ubuntu/vm.conf"
 ```
 
 Start the VM
