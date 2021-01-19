@@ -121,7 +121,12 @@ function get_ip {
 	fi
 	assoc="$(get_ip_mac_assoc)"
 	for addrfile in "$dir"/*.macaddr; do
-		printf "%s" "$assoc" | grep "$(cat "$addrfile")" | cut -d ' ' -f 1
+		prefix="${addrfile%.macaddr}"
+		ip=$(printf "%s" "$assoc" | grep "$(cat "$addrfile")" | cut -d ' ' -f 1)
+		if [ "$ip" != "" ]; then
+			printf "%s\n" "$ip" > "$prefix.ipaddr"
+		fi
+		cat "$prefix.ipaddr" || true
 	done
 }
 
