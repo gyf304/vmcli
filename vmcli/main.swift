@@ -265,7 +265,9 @@ Omit mac address for a generated address.
             switch result {
             case .success:
                 return
-            case .failure:
+            case .failure(let error):
+                FileHandle.standardError.write(error.localizedDescription.data(using: .utf8)!)
+                FileHandle.standardError.write("\n".data(using: .utf8)!)
                 quit(1)
             }
         })
