@@ -6,6 +6,11 @@ A set of utilities to help you manage VMs with `Virtualization.framework`
 
 ## Installation
 
+### Prerequisites
+
+* macOS Big Sur (11+)
+* XCode.app installed
+
 ```
 # make sure xcode command-line tools are installed
 xcode-select --install
@@ -63,6 +68,11 @@ If that's not an option, you can forcibly shut it down.
 ```
 vmctl stop ubuntu
 ```
+
+## Known Issues
+
+* Virtual Machine cannot be started with networking when InternetSharing is
+  already enabled. See [#3](/../../issues/5).
 
 ## Usage
 
