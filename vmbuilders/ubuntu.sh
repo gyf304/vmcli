@@ -34,8 +34,7 @@ fi
 
 # download files
 if [ ! -e vmlinux ]; then
-/usr/bin/curl -o vmlinux.gz "https://cloud-images.ubuntu.com/releases/focal/release/unpacked/ubuntu-20.04-server-cloudimg-$arch-vmlinuz-generic"
-gunzip vmlinux.gz
+/usr/bin/curl -o vmlinux "https://cloud-images.ubuntu.com/releases/focal/release/unpacked/ubuntu-20.04-server-cloudimg-$arch-vmlinuz-generic"
 fi
 
 if [ ! -e initrd ]; then
