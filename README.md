@@ -22,7 +22,7 @@ sudo make install
 
 You have now finished installing `vmcli` and `vmctl`
 
-Set envirionment variable `VMCTLDIR` to `~/VMs` so `vmctl` knows how to find VMs.
+Set environment variable `VMCTLDIR` to `~/VMs` so `vmctl` knows how to find VMs.
 If you don't set this, `vmctl` will use current working directory to find VMs.
 ```bash
 echo 'export VMCTLDIR="$HOME/VMs"' >> ~/.zprofile
