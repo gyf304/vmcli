@@ -3,6 +3,10 @@ set -e
 
 script="$(basename $0)"
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
 if [ "$VMCTLDIR" != "" ]; then
 	pushd "$VMCTLDIR" > /dev/null
 	VMCTLDIR="$(pwd)"
@@ -138,6 +142,22 @@ function vm_ssh {
 	ssh "$ip"
 }
 
+function list {
+	for dir in "$VMCTLDIR"/*; do
+		if [ -d "$dir" ]; then
+			# wipe dead sockets
+			SCREENDIR="$dir/screen" screen -wipe &> /dev/null || true
+			# and attempt to remove the directory
+			rmdir "$dir/screen" &> /dev/null || true
+			status="${RED}● stopped${NC}"
+			if [ -e "$dir/screen" ]; then
+				status="${GREEN}● running${NC}"
+			fi
+			printf "${status}\t%s\n" $(basename "$dir")
+		fi
+	done
+}
+
 action="$1"
 
 if [ "$action" = "start" ]; then
@@ -150,6 +170,8 @@ elif [ "$action" = "ip" ]; then
 	get_ip "$2"
 elif [ "$action" = "ssh" ]; then
 	vm_ssh "$2"
+elif [ "$action" = "list" ]; then
+	list
 else
 	echo "usage: $script {start|stop|attach|ip|ssh} vm" > /dev/stderr
 fi
