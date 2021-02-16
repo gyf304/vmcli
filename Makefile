@@ -7,9 +7,10 @@ all: build/vmcli build/vmctl
 build:
 	mkdir -p build
 
-build/vmcli: build vmcli/main.swift vmcli/vmcli.entitlements
-	xcodebuild -project vmcli.xcodeproj -scheme vmcli -configuration Release
-	cp "$(shell xcodebuild -project vmcli.xcodeproj -scheme vmcli -configuration Release -showBuildSettings | grep TARGET_BUILD_DIR | cut -d = -f 2- | cut -d ' ' -f 2)/vmcli" build/vmcli
+build/vmcli: build vmcli/Sources/vmcli/main.swift vmcli/Package.swift
+	cd vmcli && swift build -c release --arch arm64 --arch x86_64
+	cp vmcli/.build/apple/Products/Release/vmcli build/vmcli
+	codesign -s - --entitlements vmcli/vmcli.entitlements build/vmcli
 	chmod +x build/vmcli
 
 build/vmctl: build vmctl/vmctl.sh
