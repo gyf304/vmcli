@@ -8,7 +8,7 @@ build:
 	mkdir -p build
 
 build/vmcli: build vmcli/Sources/vmcli/main.swift vmcli/Package.swift
-	cd vmcli && swift build -c release --arch arm64 --arch x86_64
+	cd vmcli && swift build -c release --disable-sandbox --arch arm64 --arch x86_64
 	cp vmcli/.build/apple/Products/Release/vmcli build/vmcli
 	codesign -s - --entitlements vmcli/vmcli.entitlements build/vmcli
 	chmod +x build/vmcli
