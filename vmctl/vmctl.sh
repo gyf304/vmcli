@@ -59,7 +59,7 @@ function compile_args {
 	echo "$cmd"
 }
 
-function start {
+function expand_dir {
 	if [ "$1" = "" ]; then
 		echo "missing argument" >&2
 		exit 1
@@ -68,6 +68,14 @@ function start {
 	if [ "$VMCTLDIR" != "" ]; then
 		dir="$VMCTLDIR/$dir"
 	fi
+	if [ ! -e "$dir" ]; then
+		echo "VM not found" >&2
+		exit 1
+	fi
+}
+
+function start {
+	expand_dir "$1"
 	# wipe dead sockets
 	SCREENDIR="$dir/screen" screen -wipe &> /dev/null || true
 	# ...and check if any sockets are left
@@ -80,29 +88,12 @@ function start {
 }
 
 function attach {
-	if [ "$1" = "" ]; then
-		echo "missing argument" >&2
-		exit 1
-	fi
-	dir="${1%/}"
-	if [ "$VMCTLDIR" != "" ]; then
-		dir="$VMCTLDIR/$dir"
-	fi
+	expand_dir "$1"
 	SCREENDIR="$dir/screen" screen -r
 }
 
 function stop {
-	if [ "$1" = "" ]; then
-		echo "missing argument" >&2
-		exit 1
-	fi
-	dir="${1%/}"
-	if [ "$VMCTLDIR" != "" ]; then
-		dir="$VMCTLDIR/$dir"
-	fi
-	if [ ! -e "$dir" ]; then
-		exit 1
-	fi
+	expand_dir "$1"
 	# wait a bit until the screen directory is empty
 	while ! rmdir "$dir/screen" &> /dev/null; do
 		# input ESC-Q escape sequence
@@ -112,17 +103,7 @@ function stop {
 }
 
 function get_ip {
-	if [ "$1" = "" ]; then
-		echo "missing argument" >&2
-		exit 1
-	fi
-	dir="${1%/}"
-	if [ "$VMCTLDIR" != "" ]; then
-		dir="$VMCTLDIR/$dir"
-	fi
-	if [ ! -e "$dir" ]; then
-		exit 1
-	fi
+	expand_dir "$1"
 	assoc="$(get_ip_mac_assoc)"
 	for addrfile in "$dir"/*.macaddr; do
 		prefix="${addrfile%.macaddr}"
@@ -174,4 +155,5 @@ elif [ "$action" = "list" ]; then
 	list
 else
 	echo "usage: $script {start|stop|attach|ip|ssh} vm" > /dev/stderr
+	echo "       $script list" > /dev/stderr
 fi
