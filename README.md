@@ -107,6 +107,7 @@ OPTIONS:
 
 ```
 usage: vmctl {start|stop|attach|ip|ssh} vm
+       vmctl list
 ```
 
 ## References
