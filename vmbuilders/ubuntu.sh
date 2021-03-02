@@ -34,8 +34,12 @@ fi
 
 # download files
 if [ ! -e vmlinux ]; then
+if [ "$arch" = "amd64" ]; then
+/usr/bin/curl -o vmlinux "https://cloud-images.ubuntu.com/releases/focal/release/unpacked/ubuntu-20.04-server-cloudimg-$arch-vmlinuz-generic"
+else
 /usr/bin/curl -o vmlinux.gz "https://cloud-images.ubuntu.com/releases/focal/release/unpacked/ubuntu-20.04-server-cloudimg-$arch-vmlinuz-generic"
 gunzip vmlinux.gz
+fi
 fi
 
 if [ ! -e initrd ]; then
