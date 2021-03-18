@@ -151,7 +151,7 @@ elif [ "$action" = "ip" ]; then
 	get_ip "$2"
 elif [ "$action" = "ssh" ]; then
 	vm_ssh "$2"
-elif [ "$action" = "list" ]; then
+elif [ "$action" = "list" -o "$action" = "ls" ]; then
 	list
 else
 	echo "usage: $script {start|stop|attach|ip|ssh} vm" > /dev/stderr
