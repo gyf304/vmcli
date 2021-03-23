@@ -72,7 +72,7 @@ vmctl stop ubuntu
 ## Known Issues
 
 * Virtual Machine cannot be started with networking when InternetSharing is
-  already enabled. See [#3](/../../issues/5).
+  already enabled. See [#5](/../../issues/5).
 
 ## Usage
 
