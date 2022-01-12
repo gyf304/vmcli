@@ -66,13 +66,21 @@ func openDisk(path: String, readOnly: Bool) throws -> VZVirtioBlockDeviceConfigu
     return vmBlockDevCfg
 }
 
+@available(macOS 12, *)
+func openFolder(path: String) throws -> VZDirectorySharingDeviceConfiguration {
+    let sharedDirectory = VZSharedDirectory(url: URL(fileURLWithPath: path), readOnly: false)
+    let vzDirShare = VZVirtioFileSystemDeviceConfiguration(tag: path)
+    vzDirShare.share = VZSingleDirectoryShare(directory: sharedDirectory)
+    return vzDirShare
+}
+
 class OccurrenceCounter {
     let pattern: Data
     var i = 0
     init(_ pattern: Data) {
         self.pattern = pattern
     }
-    
+
     func process(_ data: Data) -> Int {
         if pattern.count == 0 {
             return 0
@@ -121,6 +129,10 @@ struct VMCLI: ParsableCommand {
 
     @Option(name: [ .customLong("cdrom") ], help: "CD-ROMs to use")
     var cdroms: [String] = []
+
+    @available(macOS 12, *)
+    @Option(name: [ .short, .customLong("folder")], help: "Folders to share")
+    var folders: [String] = []
 
     @Option(name: [ .short, .customLong("network") ], help: """
 Networks to use. e.g. aa:bb:cc:dd:ee:ff@nat for a nat device, \
@@ -189,6 +201,12 @@ Omit mac address for a generated address.
         for cdrom in cdroms {
             try vmCfg.storageDevices.append(openDisk(path: cdrom, readOnly: true))
         }
+        if #available(macOS 12, *) {
+            for folder in folders {
+                puts("Adding shared folder '\(folder)', but be warned, this might be unstable.")
+                try vmCfg.directorySharingDevices.append(openFolder(path: folder))
+            }
+        }
 
         // set up networking
         // TODO: better error handling
@@ -225,7 +243,7 @@ Omit mac address for a generated address.
         vmCfg.entropyDevices = [ VZVirtioEntropyDeviceConfiguration() ]
 
         try vmCfg.validate()
-        
+
         // disable stdin echo, disable stdin line buffer, disable ^C
         setupTty()
 

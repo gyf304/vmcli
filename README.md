@@ -69,6 +69,21 @@ If that's not an option, you can forcibly shut it down.
 vmctl stop ubuntu
 ```
 
+## Share folders with host
+
+Support for sharing folders with the host was added in macOS 12 (Monterery), and
+this is enabled if compiled on 12.0 or later.
+
+As of 12.1 the macOS support for this feature seems somewhat unreliable. If you
+want to try it anyway, create one or more folders in your VM directory, and pass
+them in as `--folder` arguments. In the guest, mount these using `-t virtiofs`.
+
+For example: in the host, create a `foo` directory in the VM directory (where
+the kernel and initrd live), and add this using `--folder`. For example, add
+`folder=foo` to `vm.conf`, or pass `--folder=foo` to `vmcli` directly.
+
+In the guest, ensure `/mnt/foo` is an empty directory, then `mount -t virtiofs foo /mnt/foo`.
+
 ## Known Issues
 
 * Virtual Machine cannot be started with networking when InternetSharing is
@@ -79,7 +94,7 @@ vmctl stop ubuntu
 ### vmcli
 
 ```
-USAGE: vmcli [--cpu-count <cpu-count>] [--memory-size <memory-size>] [--memory-size-suffix <memory-size-suffix>] [--disk <disk> ...] [--cdrom <cdrom> ...] [--network <network> ...] [--balloon <balloon>] [--bootloader <bootloader>] [--kernel <kernel>] [--initrd <initrd>] [--cmdline <cmdline>] [--escape-sequence <escape-sequence>]
+USAGE: vmcli [--cpu-count <cpu-count>] [--memory-size <memory-size>] [--memory-size-suffix <memory-size-suffix>] [--disk <disk> ...] [--cdrom <cdrom> ...] [--folder <folder> ...] [--network <network> ...] [--balloon <balloon>] [--bootloader <bootloader>] [--kernel <kernel>] [--initrd <initrd>] [--cmdline <cmdline>] [--escape-sequence <escape-sequence>]
 
 OPTIONS:
   -c, --cpu-count <cpu-count>
@@ -88,16 +103,17 @@ OPTIONS:
                           Memory Bytes (default: 512)
   --memory-size-suffix <memory-size-suffix>
                           Memory Size Suffix (default: MiB)
-  -d, --disk <disk>       Disks to use 
-  --cdrom <cdrom>         CD-ROMs to use 
+  -d, --disk <disk>       Disks to use
+  --cdrom <cdrom>         CD-ROMs to use
+  -f, --folder <folder>   Folders to share (macOS 12.0 or later)
   -n, --network <network> Networks to use. e.g. aa:bb:cc:dd:ee:ff@nat for a nat device, or ...@en0 for bridging to en0. Omit mac address for a
                           generated address. (default: nat)
   --balloon <balloon>     Enable / Disable Memory Ballooning (default: true)
   -b, --bootloader <bootloader>
                           Bootloader to use (default: linux)
-  -k, --kernel <kernel>   Kernel to use 
-  --initrd <initrd>       Initrd to use 
-  --cmdline <cmdline>     Kernel cmdline to use 
+  -k, --kernel <kernel>   Kernel to use
+  --initrd <initrd>       Initrd to use
+  --cmdline <cmdline>     Kernel cmdline to use
   --escape-sequence <escape-sequence>
                           Escape Sequence, when using a tty (default: q)
   -h, --help              Show help information.
