@@ -130,9 +130,13 @@ struct VMCLI: ParsableCommand {
     @Option(name: [ .customLong("cdrom") ], help: "CD-ROMs to use")
     var cdroms: [String] = []
 
+#if EXTRA_WORKAROUND_FOR_BIG_SUR
+    // See comment below for similar #if
+#else
     @available(macOS 12, *)
     @Option(name: [ .short, .customLong("folder")], help: "Folders to share")
     var folders: [String] = []
+#endif
 
     @Option(name: [ .short, .customLong("network") ], help: """
 Networks to use. e.g. aa:bb:cc:dd:ee:ff@nat for a nat device, \
@@ -201,13 +205,18 @@ Omit mac address for a generated address.
         for cdrom in cdroms {
             try vmCfg.storageDevices.append(openDisk(path: cdrom, readOnly: true))
         }
+        // The #available check still causes a runtime dyld error on macOS 11 (Big Sur),
+        // apparently due to a Swift bug, so add an extra check to work around this until
+        // the bug is resolved. See eg https://developer.apple.com/forums/thread/688678
+#if EXTRA_WORKAROUND_FOR_BIG_SUR
+#else
         if #available(macOS 12, *) {
             for folder in folders {
                 puts("Adding shared folder '\(folder)', but be warned, this might be unstable.")
                 try vmCfg.directorySharingDevices.append(openFolder(path: folder))
             }
         }
-
+#endif
         // set up networking
         // TODO: better error handling
         vmCfg.networkDevices = []
