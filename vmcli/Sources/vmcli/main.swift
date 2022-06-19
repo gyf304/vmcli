@@ -67,9 +67,9 @@ func openDisk(path: String, readOnly: Bool) throws -> VZVirtioBlockDeviceConfigu
 }
 
 @available(macOS 12, *)
-func openFolder(path: String) throws -> VZDirectorySharingDeviceConfiguration {
-    let sharedDirectory = VZSharedDirectory(url: URL(fileURLWithPath: path), readOnly: false)
-    let vzDirShare = VZVirtioFileSystemDeviceConfiguration(tag: path)
+func openFolder(path: String, tag: String, readOnly: Bool) throws -> VZDirectorySharingDeviceConfiguration {
+    let sharedDirectory = VZSharedDirectory(url: URL(fileURLWithPath: path), readOnly: readOnly)
+    let vzDirShare = VZVirtioFileSystemDeviceConfiguration(tag: tag)
     vzDirShare.share = VZSingleDirectoryShare(directory: sharedDirectory)
     return vzDirShare
 }
@@ -212,8 +212,21 @@ Omit mac address for a generated address.
 #else
         if #available(macOS 12, *) {
             for folder in folders {
-                puts("Adding shared folder '\(folder)', but be warned, this might be unstable.")
-                try vmCfg.directorySharingDevices.append(openFolder(path: folder))
+                let parts = folder.split(separator: ":")
+                if parts.count > 3 {
+                    throw ValidationError("Too many components in shared folder: \(folder)")
+                }
+                let path = String(parts[0])
+                var tag = String(parts[0])
+                var readOnly = false
+                if parts.count > 1 {
+                    tag = String(parts[1])
+                }
+                if parts.count > 2 {
+                    readOnly = (parts[2] == "ro")
+                }
+                puts("Adding shared folder '\(path)' with tag \(tag), but be warned, this might be unstable.")
+                try vmCfg.directorySharingDevices.append(openFolder(path: path, tag: tag, readOnly: readOnly))
             }
         }
 #endif
