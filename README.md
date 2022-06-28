@@ -71,18 +71,25 @@ vmctl stop ubuntu
 
 ## Share folders with host
 
-Support for sharing folders with the host was added in macOS 12 (Monterery), and
+Support for sharing folders with the host was added in macOS 12 (Monterey), and
 this is enabled if compiled on 12.0 or later.
 
 As of 12.1 the macOS support for this feature seems somewhat unreliable. If you
-want to try it anyway, create one or more folders in your VM directory, and pass
-them in as `--folder` arguments. In the guest, mount these using `-t virtiofs`.
+want to try it anyway, use `--folder <host path>:<tag>` arguments. In the guest,
+mount these using `-t virtiofs <tag> <guest mountpoint>`.
+
+If the `:<tag>` component is omitted, the host path will be used as a tag, but
+note there is a size limit of 36 UTF-8 bytes for tags.
+
+The shared folder can be made read-only to the guest by adding `ro` as a third
+component to the shared folder argument: `--folder <host path>:<tag>:ro`
 
 For example: in the host, create a `foo` directory in the VM directory (where
 the kernel and initrd live), and add this using `--folder`. For example, add
 `folder=foo` to `vm.conf`, or pass `--folder=foo` to `vmcli` directly.
 
-In the guest, ensure `/mnt/foo` is an empty directory, then `mount -t virtiofs foo /mnt/foo`.
+In the guest, ensure `/mnt/foo` is an empty directory, then
+`sudo mount -t virtiofs foo /mnt/foo`.
 
 ## Known Issues
 
