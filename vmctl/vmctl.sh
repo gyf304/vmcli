@@ -8,28 +8,28 @@ GREEN='\033[0;32m'
 NC='\033[0m'
 
 if [ "$VMCTLDIR" != "" ]; then
-	pushd "$VMCTLDIR" > /dev/null
+	pushd "$VMCTLDIR" >/dev/null
 	VMCTLDIR="$(pwd)"
-	popd > /dev/null
+	popd >/dev/null
 fi
 
 function generate_mac {
-	printf '%012x\n' "$(( 0x$(hexdump -e '6/1 "%02x" "\n"' -n 6 /dev/urandom) & 0xfeffffffffff | 0x020000000000 ))"
+	printf '%012x\n' "$((0x$(hexdump -e '6/1 "%02x" "\n"' -n 6 /dev/urandom) & 0xfeffffffffff | 0x020000000000))"
 }
 
 function get_ip_mac_assoc {
-	arp -a \
-		| cut -d ' ' -f 2,4 \
-		| grep : \
-		| sed 's/[\(\)]//g' \
-		| sed 's/[: ]/ 0x/g' \
-		| xargs -L 1 printf '%s %02x%02x%02x%02x%02x%02x\n'
+	arp -a |
+		cut -d ' ' -f 2,4 |
+		grep : |
+		sed 's/[\(\)]//g' |
+		sed 's/[: ]/ 0x/g' |
+		xargs -L 1 printf '%s %02x%02x%02x%02x%02x%02x\n'
 }
 
 function get_mac {
 	file="$1"
 	if [ ! -e "$file" ]; then
-		generate_mac > "$file"
+		generate_mac >"$file"
 	fi
 	cat "$file"
 }
@@ -50,11 +50,11 @@ function compile_args {
 				mac=$(get_mac "$dir/$netid.macaddr" | format_mac)
 				cmd+=" --$key=\"$mac@$value\""
 			fi
-			netid=$(( $netid + 1 ))
+			netid=$(($netid + 1))
 		else
 			cmd+=" '--$key=$value'"
 		fi
-	done < "$dir/vm.conf"
+	done <"$dir/vm.conf"
 	IFS="$OLD_IFS"
 	echo "$cmd"
 }
@@ -77,9 +77,9 @@ function expand_dir {
 function start {
 	expand_dir "$1"
 	# wipe dead sockets
-	SCREENDIR="$dir/screen" screen -wipe &> /dev/null || true
+	SCREENDIR="$dir/screen" screen -wipe &>/dev/null || true
 	# ...and check if any sockets are left
-	if ! rmdir "$dir/screen" &> /dev/null ; then
+	if ! rmdir "$dir/screen" &>/dev/null; then
 		echo "VM already running" >&2
 		exit 1
 	fi
@@ -95,7 +95,7 @@ function attach {
 function stop {
 	expand_dir "$1"
 	# wait a bit until the screen directory is empty
-	while ! rmdir "$dir/screen" &> /dev/null; do
+	while ! rmdir "$dir/screen" &>/dev/null; do
 		# input ESC-Q escape sequence
 		SCREENDIR="$dir/screen" screen -X stuff $(printf "\033q")
 		sleep 0.5
@@ -109,7 +109,7 @@ function get_ip {
 		prefix="${addrfile%.macaddr}"
 		ip=$(printf "%s" "$assoc" | grep "$(cat "$addrfile")" | cut -d ' ' -f 1)
 		if [ "$ip" != "" ]; then
-			printf "%s\n" "$ip" > "$prefix.ipaddr"
+			printf "%s\n" "$ip" >"$prefix.ipaddr"
 		fi
 		cat "$prefix.ipaddr" || true
 	done
@@ -120,16 +120,16 @@ function vm_ssh {
 	if [ "$ip" = "" ]; then
 		exit 1
 	fi
-	ssh "$ip"
+	ssh -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "$ip"
 }
 
 function list {
 	for dir in "$VMCTLDIR"/*; do
 		if [ -d "$dir" ]; then
 			# wipe dead sockets
-			SCREENDIR="$dir/screen" screen -wipe &> /dev/null || true
+			SCREENDIR="$dir/screen" screen -wipe &>/dev/null || true
 			# and attempt to remove the directory
-			rmdir "$dir/screen" &> /dev/null || true
+			rmdir "$dir/screen" &>/dev/null || true
 			status="${RED}● stopped${NC}"
 			if [ -e "$dir/screen" ]; then
 				status="${GREEN}● running${NC}"
@@ -154,6 +154,6 @@ elif [ "$action" = "ssh" ]; then
 elif [ "$action" = "list" -o "$action" = "ls" ]; then
 	list
 else
-	echo "usage: $script {start|stop|attach|ip|ssh} vm" > /dev/stderr
-	echo "       $script list" > /dev/stderr
+	echo "usage: $script {start|stop|attach|ip|ssh} vm" >/dev/stderr
+	echo "       $script list" >/dev/stderr
 fi
