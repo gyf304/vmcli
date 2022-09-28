@@ -1,0 +1,9 @@
+version: 2
+ethernets:
+  enp0s1:
+    gateway4: 192.168.64.1
+    nameservers:
+      addresses: [1.1.1.1, 1.0.0.1]
+    {% if staticIpAddress.length > 0 %}addresses: [{{ staticIpAddress }}/24]
+    {% else %}addresses: [192.168.64.2/24]
+    {% endif %}

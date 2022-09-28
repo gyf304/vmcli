@@ -1,0 +1,14 @@
+#cloud-config
+users:
+  - default
+  - name: {{ username }} 
+    lock_passwd: False
+    gecos: {{ username }} 
+    groups: [adm, audio, cdrom, dialout, dip, floppy, lxd, netdev, plugdev, sudo, video]
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    shell: /bin/bash
+    {% if sshPublicKey.length > 0 %}ssh-authorized-keys: 
+      - {{ sshPublicKey }}
+    {% endif %}
+bootcmd:
+  - apt remove -y irqbalance
