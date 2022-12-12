@@ -1,0 +1,60 @@
+#cloud-config
+mounts:
+  - [ 192.168.64.1:/System/Volumes/Data/Users, /Users, nfs, "auto,nofail,noatime,nolock,intr,tcp,actimeo=1800", 0, 0 ]
+runcmd:
+  - [ mount, -a ]
+apt:
+  conf: |
+    Acquire::Check-Valid-Until "false";
+    Acquire::Check-Date "false";
+    Acquire::https::Verify-Peer "false";
+  sources:
+    docker.list:
+      source: deb [arch={{ cpuArchitecture }} trusted=yes] https://download.docker.com/linux/ubuntu $RELEASE stable
+      keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg-agent
+  - software-properties-common
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - nfs-common
+
+# Enable ipv4 forwarding, required on CIS hardened machines
+write_files:
+  - path: /etc/sysctl.d/enabled_ipv4_forwarding.conf
+    content: |
+      net.ipv4.conf.all.forwarding=1
+  - path: /etc/docker/daemon.json
+    content: |
+      {"features": {"buildkit": true}, "hosts": ["tcp://0.0.0.0:2375", "unix:///var/run/docker.sock"]}
+  - path: /etc/systemd/system/docker.service.d/override.conf
+    content: |
+      [Service]
+       ExecStart=
+       ExecStart=/usr/bin/dockerd
+
+# create the docker group
+groups:
+  - docker
+
+# Add default auto created user to docker group
+system_info:
+  default_user:
+    groups: [docker]
+
+users:
+  - default
+  - name: {{ username }}
+    lock_passwd: False
+    gecos: {{ username }}
+    groups: [adm, audio, cdrom, dialout, dip, floppy, lxd, netdev, plugdev, sudo, video, docker]
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    shell: /bin/bash
+    {% if sshPublicKey.length > 0 %}ssh-authorized-keys: 
+      - {{ sshPublicKey }}
+    {% endif %}

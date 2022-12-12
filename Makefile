@@ -13,8 +13,9 @@ build/vmcli: build vmcli/Sources/vmcli/main.swift vmcli/Package.swift
 	codesign -s - --entitlements vmcli/vmcli.entitlements build/vmcli
 	chmod +x build/vmcli
 
-build/vmctl: build vmctl/vmctl.sh
-	cp vmctl/vmctl.sh build/vmctl
+build/vmctl: build vmctl/Sources/vmctl/main.swift vmctl/Package.swift
+	cd vmctl && swift build -c release --disable-sandbox
+	cp vmctl/.build/release/vmctl build/vmctl
 	chmod +x build/vmctl
 
 clean:
@@ -23,10 +24,3 @@ clean:
 install: all
 	install -m 755 build/vmcli $(PREFIX)/bin/vmcli
 	install -m 755 build/vmctl $(PREFIX)/bin/vmctl
-
-build/vm: build
-	mkdir -p build/vm
-
-build/vm/ubuntu: build/vm
-	mkdir -p build/vm/ubuntu
-	cd build/vm/ubuntu && ../../../vmbuilders/ubuntu.sh

@@ -1,0 +1,68 @@
+{
+  "pins" : [
+    {
+      "identity" : "colorizeswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mtynior/ColorizeSwift.git",
+      "state" : {
+        "revision" : "2a354639173d021f4648cf1912b2b00a3a7cd83c",
+        "version" : "1.6.0"
+      }
+    },
+    {
+      "identity" : "datacompression",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mw99/DataCompression.git",
+      "state" : {
+        "revision" : "5ab15951321b08b74511601cbd0497667649d70b",
+        "version" : "3.8.0"
+      }
+    },
+    {
+      "identity" : "eval",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tevelee/Eval",
+      "state" : {
+        "revision" : "2070dfb6f739a9665c81601162ac16ee8291fb30",
+        "version" : "1.5.0"
+      }
+    },
+    {
+      "identity" : "files",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/JohnSundell/Files",
+      "state" : {
+        "revision" : "d273b5b7025d386feef79ef6bad7de762e106eaf",
+        "version" : "4.2.0"
+      }
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser",
+      "state" : {
+        "revision" : "9f39744e025c7d377987f30b03770805dcb0bcd1",
+        "version" : "1.1.4"
+      }
+    },
+    {
+      "identity" : "tarscape",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kayembi/Tarscape",
+      "state" : {
+        "branch" : "main",
+        "revision" : "ce026160f8f009275afd1cc8175a199aa3ec0072"
+      }
+    },
+    {
+      "identity" : "tuxedo",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tevelee/Tuxedo.git",
+      "state" : {
+        "revision" : "e7d767f7fd2b8904872593a48604ff1810108a88",
+        "version" : "1.1.1"
+      }
+    }
+  ],
+  "version" : 2
+}
