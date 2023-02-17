@@ -229,6 +229,19 @@ Omit mac address for a generated address.
                 try vmCfg.directorySharingDevices.append(openFolder(path: path, tag: tag, readOnly: readOnly))
             }
         }
+
+        if #available(macOS 13, *) {
+            do {
+                try VZVirtioFileSystemDeviceConfiguration.validateTag("rosetta")
+                let rosettaDirectoryShare = try VZLinuxRosettaDirectoryShare()
+                let fileSystemDevice = VZVirtioFileSystemDeviceConfiguration(tag: "rosetta")
+                fileSystemDevice.share = rosettaDirectoryShare
+
+                vmCfg.directorySharingDevices.append(fileSystemDevice)
+            } catch VZError.invalidVirtualMachineConfiguration {
+                // Rosetta is unavailable.
+            }
+        }
 #endif
         // set up networking
         // TODO: better error handling
