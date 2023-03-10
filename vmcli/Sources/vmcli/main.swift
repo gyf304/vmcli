@@ -18,16 +18,23 @@ var origStdoutTerm : termios? = nil
 
 var vm : VZVirtualMachine? = nil
 
-var stopRequested = false
-
 // mask TERM signals so we can perform clean up
-let signalMask = SIGPIPE | SIGINT | SIGTERM | SIGHUP
-signal(signalMask, SIG_IGN)
-let sigintSrc = DispatchSource.makeSignalSource(signal: signalMask, queue: .main)
-sigintSrc.setEventHandler {
-    quit(1)
+signal(SIGPIPE, SIG_IGN)
+signal(SIGHUP, SIG_IGN)
+signal(SIGINT, SIG_IGN)
+signal(SIGTERM, SIG_IGN)
+let sigSrcs = [
+    SIGPIPE: DispatchSource.makeSignalSource(signal: SIGPIPE, queue: .main),
+    SIGHUP: DispatchSource.makeSignalSource(signal: SIGHUP, queue: .main),
+    SIGINT: DispatchSource.makeSignalSource(signal: SIGINT, queue: .main),
+    SIGTERM: DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main),
+]
+for (_, sigSrc) in sigSrcs {
+    sigSrc.setEventHandler {
+        quit(1)
+    }
+    sigSrc.resume()
 }
-sigintSrc.resume()
 
 func setupTty() {
     if isatty(0) != 0 {
@@ -46,6 +53,24 @@ func resetTty() {
     }
     if origStdoutTerm != nil {
         tcsetattr(1, TCSANOW, &origStdoutTerm!)
+    }
+}
+
+func tryGracefulShutdown(timeout: Double) {
+    if vm != nil && vm!.canRequestStop {
+        do {
+            try vm!.requestStop()
+            // Wait for 'graceful' shutdown, but quit immediately if timeout reached
+            DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
+                FileHandle.standardError.write("Shutdown timeout expired, exiting immediately.\r\n".data(using: .utf8)!)
+                quit(1)
+            }
+        } catch {
+            FileHandle.standardError.write("Failed to request stop.\r\n".data(using: .utf8)!)
+            quit(1)
+        }
+    } else {
+        quit(1)
     }
 }
 
@@ -133,7 +158,6 @@ struct VMCLI: ParsableCommand {
 #if EXTRA_WORKAROUND_FOR_BIG_SUR
     // See comment below for similar #if
 #else
-    @available(macOS 12, *)
     @Option(name: [ .short, .customLong("folder")], help: "Folders to share")
     var folders: [String] = []
 #endif
@@ -162,6 +186,9 @@ Omit mac address for a generated address.
 
     @Option(help: "Escape Sequence, when using a tty")
     var escapeSequence: String = "q"
+
+    @Option(help: "Timeout in seconds for graceful shutdown")
+    var shutdownTimeout: Double = 120.0
 
     mutating func run() throws {
         vmCfg.cpuCount = cpuCount
@@ -288,11 +315,11 @@ Omit mac address for a generated address.
         let escapeSequenceCounter = OccurrenceCounter(fullEscapeSequence)
         FileHandle.standardInput.waitForDataInBackgroundAndNotify()
         NotificationCenter.default.addObserver(forName: NSNotification.Name.NSFileHandleDataAvailable, object: FileHandle.standardInput, queue: nil)
-        {_ in
+        {[shutdownTimeout] _ in
             let data = FileHandle.standardInput.availableData
             if origStdinTerm != nil && escapeSequenceCounter.process(data) > 0 {
-                FileHandle.standardError.write("Escape sequence detected, exiting.\n".data(using: .utf8)!)
-                quit(1)
+                FileHandle.standardError.write("Escape sequence detected, exiting.\r\n".data(using: .utf8)!)
+                tryGracefulShutdown(timeout: shutdownTimeout)
             }
             vmSerialIn.fileHandleForWriting.write(data)
             if data.count > 0 {
@@ -308,6 +335,13 @@ Omit mac address for a generated address.
             if data.count > 0 {
                 vmSerialOut.fileHandleForReading.waitForDataInBackgroundAndNotify()
             }
+        }
+
+        sigSrcs[SIGTERM]!.setEventHandler { [shutdownTimeout] in
+            tryGracefulShutdown(timeout: shutdownTimeout)
+        }
+        sigSrcs[SIGINT]!.setEventHandler { [shutdownTimeout] in
+            tryGracefulShutdown(timeout: shutdownTimeout)
         }
 
         // start VM
