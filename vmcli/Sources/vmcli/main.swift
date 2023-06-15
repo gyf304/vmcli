@@ -4,6 +4,8 @@ import Virtualization
 
 enum BootLoader: String, ExpressibleByArgument {
     case linux
+    @available(macOS 13, *)
+    case efi
 }
 
 enum SizeSuffix: UInt64, ExpressibleByArgument {
@@ -175,13 +177,16 @@ Omit mac address for a generated address.
     @Option(name: .shortAndLong, help: "Bootloader to use")
     var bootloader: BootLoader = BootLoader.linux
 
-    @Option(name: .shortAndLong, help: "Kernel to use")
+    @Option(name: .shortAndLong, help: "EFI variable store location (EFI bootloader only)")
+    var efiVars: String?
+
+    @Option(name: .shortAndLong, help: "Kernel to use (Linux bootloader only)")
     var kernel: String?
 
-    @Option(help: "Initrd to use")
+    @Option(help: "Initrd to use (Linux bootloader only)")
     var initrd: String?
 
-    @Option(help: "Kernel cmdline to use")
+    @Option(help: "Kernel cmdline to use (Linux bootloader only)")
     var cmdline: String?
 
     @Option(help: "Escape Sequence, when using a tty")
@@ -200,6 +205,9 @@ Omit mac address for a generated address.
             if kernel == nil {
                 throw ValidationError("Kernel not specified")
             }
+            if efiVars != nil {
+                throw ValidationError("EFI variable store cannot be used with Linux bootloader")
+            }
             let vmKernelURL = URL(fileURLWithPath: kernel!)
             let vmBootLoader = VZLinuxBootLoader(kernelURL: vmKernelURL)
             if initrd != nil {
@@ -209,6 +217,27 @@ Omit mac address for a generated address.
                 vmBootLoader.commandLine = cmdline!
             }
             vmCfg.bootLoader = vmBootLoader
+        case BootLoader.efi:
+            if #available(macOS 13, *) {
+                if efiVars == nil {
+                    throw ValidationError("EFI variable store must be specified if using EFI bootloader")
+                }
+                if kernel != nil || initrd != nil || cmdline != nil {
+                    throw ValidationError("Kernel, initrd and cmdline options cannot be used with EFI bootloader")
+                }
+                let efiVarStoreURL = URL(fileURLWithPath: efiVars!)
+                var efiVarStore: VZEFIVariableStore
+                if FileManager.default.fileExists(atPath: efiVars!) {
+                    efiVarStore = VZEFIVariableStore(url: efiVarStoreURL)
+                } else {
+                    efiVarStore = try VZEFIVariableStore(creatingVariableStoreAt: efiVarStoreURL)
+                }
+                let vmBootLoader = VZEFIBootLoader()
+                vmBootLoader.variableStore = efiVarStore
+                vmCfg.bootLoader = vmBootLoader
+            } else {
+                throw ValidationError("EFI bootloader is only available on macOS 13 and later versions")
+            }
         }
 
         // set up tty
