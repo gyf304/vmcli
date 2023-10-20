@@ -8,7 +8,7 @@ A set of utilities to help you manage VMs with `Virtualization.framework`
 
 ### Prerequisites
 
-* macOS Big Sur (11+)
+* macOS Ventura (13+)
 * XCode.app installed
 
 ```
